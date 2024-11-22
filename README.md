@@ -20,7 +20,7 @@
 - Vanilla JavaScript
 - Адаптивная верстка
 - CSS-анимации
-- Web Animation API
+- SPA
 
 ## 🚀 Установка и запуск
 
@@ -45,6 +45,8 @@
 ## 🎨 Скриншоты
 
 ![Matrix Interface Preview](/screenshots/matrix-preview.png)
+![Matrix Interface Preview](/screenshots/matrix-preview1.png)
+![Matrix Interface Preview](/screenshots/matrix-preview2.png)
 
 ## 🤖 Логика работы
 
