@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .scan-line {
+            background: linear-gradient(transparent 0%, rgba(0, 255, 0, 0.1) 50%, transparent 100%);
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            animation: scan 8s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(-100vh); }
+            100% { transform: translateY(100vh); }
+        }
+
+        #terminal {
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+            white-space: normal;
+            word-wrap: break-word;
+            max-width: 100vw;
+        }
+
+        .command-line {
+            margin: 5px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .input-line {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .input-line.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .prompt {
+            color: #0f0;
+        }
+
+        #input {
+            background: transparent;
+            border: none;
+            color: #0f0;
+            font-family: monospace;
+            font-size: 16px;
+            outline: none;
+            width: 100%;
+        }
+
+        #matrix-rain {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="scan-line"></div>
+    <div id="terminal">
+        <div id="output"></div>
+        <div class="command-line input-line">
+            <span class="prompt">&gt;&nbsp;</span>
+            <input type="text" id="input" autofocus placeholder="Enter command..." disabled>
+        </div>
+    </div>
+    <canvas id="matrix-rain"></canvas>
+
+    <script>
+        const commands = [
+            "INITIALIZING SYSTEM...",
+            "CHECKING GOSUSLUGI NETWORKS STATUS...",
+            "LOADING QUANTUM ELBRUS PROCESSORS...",
+            "GENERATING GULAG IN VIRTUAL REALITY...",
+            "BYPASSING SECURITY PROTOCOLS OF US CIA...",
+            "INFLUENCE ON AMERICAN VOTES...",
+            "READY FOR YOUR AWESOME INPUT..."
+        ];
+
+        const output = document.getElementById('output');
+        const input = document.getElementById('input');
+        const inputLine = document.querySelector('.input-line');
+        
+        async function typeCommand(text, delay = 50) {
+            let index = 0;
+            const line = document.createElement('div');
+            line.className = 'command-line';
+            output.appendChild(line);
+
+            return new Promise(resolve => {
+                const interval = setInterval(() => {
+                    if (index < text.length) {
+                        line.textContent += text[index];
+                        index++;
+                    } else {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, delay);
+            });
+        }
+
+        async function initializeTerminal() {
+            for (const command of commands) {
+                await typeCommand(command);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            input.disabled = false;
+            inputLine.classList.add('active');
+        }
+
+        initializeTerminal();
+        const canvas = document.getElementById('matrix-rain');
+        const ctx = canvas.getContext('2d');
+
+        let fontSize = 20;
+        let drops = [];
+        let textMatrix = [];
+        let matrixSymbols = [];
+        const katakana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン'.split('');
+        const numbers = '0123456789'.split('');
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        const allSymbols = [...katakana, ...numbers, ...letters];
+
+        function getRandomSymbol() {
+            return allSymbols[Math.floor(Math.random() * allSymbols.length)];
+        }
+
+        function initMatrix(text) {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            ctx.font = fontSize + 'px monospace';
+            const textWidth = ctx.measureText(text).width;
+            const columns = Math.ceil(canvas.width / fontSize);
+            const startX = Math.floor((canvas.width - textWidth) / 2);
+            const startY = Math.floor(canvas.height / 2);
+            
+            drops = new Array(columns).fill(0);
+            textMatrix = new Array(columns).fill(null);
+            matrixSymbols = new Array(columns).fill('');
+
+            let currentX = startX;
+            for (let i = 0; i < text.length; i++) {
+                const column = Math.floor(currentX / fontSize);
+                textMatrix[column] = {
+                    char: text[i],
+                    y: startY,
+                    formed: false,
+                    formingProgress: 0,
+                    symbolsToTry: 25 + Math.random() * 25, // Количество символов до формирования
+                    symbolsTried: 0
+                };
+                currentX += fontSize;
+            }
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = fontSize + 'px monospace';
+            
+            for (let i = 0; i < drops.length; i++) {
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
+                
+                if (textMatrix[i]) {
+                    if (y >= textMatrix[i].y && !textMatrix[i].formed) {
+                        textMatrix[i].symbolsTried++;
+
+                        if (textMatrix[i].symbolsTried < textMatrix[i].symbolsToTry) {
+                            ctx.fillStyle = '#0F0';
+                            ctx.fillText(getRandomSymbol(), x, textMatrix[i].y);
+                        } else {
+
+                            textMatrix[i].formed = true;
+                            ctx.fillStyle = '#FFF';
+                            ctx.fillText(textMatrix[i].char, x, textMatrix[i].y);
+                        }
+
+                        if (textMatrix[i].formed) {
+                            drops[i] = 0;
+                        }
+                    } else {
+
+                        ctx.fillStyle = '#0F0';
+                        ctx.fillText(getRandomSymbol(), x, y);
+                        
+                        if (y > canvas.height && Math.random() > 0.975) {
+                            drops[i] = 0;
+                        }
+                        drops[i]++;
+                    }
+                } else {
+
+                    ctx.fillStyle = '#0F0';
+                    ctx.fillText(getRandomSymbol(), x, y);
+                    
+                    if (y > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+
+            const allFormed = textMatrix.every(cell => !cell || cell.formed);
+            if (allFormed) {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#0F0';
+                textMatrix.forEach((cell, i) => {
+                    if (cell) {
+                        ctx.fillStyle = '#FFF';
+                        ctx.fillText(cell.char, i * fontSize, cell.y);
+                    }
+                });
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function startMatrixAnimation(text) {
+            document.getElementById('terminal').style.display = 'none';
+            canvas.style.display = 'block';
+            
+            initMatrix(text);
+            if (!window.matrixInterval) {
+                window.matrixInterval = setInterval(drawMatrix, 33);
+            }
+        }
+
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !input.disabled) {
+                const text = this.value.toUpperCase();
+                if (text) {
+                    startMatrixAnimation(text);
+                }
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (canvas.style.display === 'block') {
+                initMatrix(input.value.toUpperCase());
+            }
+        });
+    </script>
+</body>
+</html>
