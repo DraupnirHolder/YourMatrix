@@ -1,264 +1,286 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
+    <meta charset="UTF-8">
+    <title>The Matrix Protocol</title>
     <style>
         body {
             background: #000;
-            color: #0f0;
-            font-family: monospace;
+            color: #0F0;
+            font-family: 'Courier New', Courier, monospace;
             margin: 0;
             overflow: hidden;
-            position: relative;
-            -webkit-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.6) 100%);
+            background-size: 100% 2px;
+            pointer-events: none;
+            z-index: 10;
         }
 
         .scan-line {
-            background: linear-gradient(transparent 0%, rgba(0, 255, 0, 0.1) 50%, transparent 100%);
-            height: 100vh;
-            width: 100vw;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(to bottom, rgba(0, 255, 0, 0), rgba(0, 255, 0, 0.1) 50%, rgba(0, 255, 0, 0));
             position: fixed;
-            animation: scan 8s linear infinite;
+            left: 0;
+            top: 0;
+            animation: scanline 6s linear infinite;
             pointer-events: none;
+            z-index: 11;
+            opacity: 0.6;
         }
 
-        @keyframes scan {
-            0% { transform: translateY(-100vh); }
-            100% { transform: translateY(100vh); }
+        @keyframes scanline {
+            0% { top: -10%; }
+            100% { top: 110%; }
         }
 
         #terminal {
-            padding: 20px;
-            height: 100vh;
+            padding: 2rem;
             box-sizing: border-box;
-            overflow: hidden;
-            white-space: normal;
-            word-wrap: break-word;
-            max-width: 100vw;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 5;
+            text-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
+            font-size: 1.2rem;
         }
 
         .command-line {
-            margin: 5px 0;
+            margin-bottom: 0.5rem;
             white-space: pre-wrap;
-            word-wrap: break-word;
+            opacity: 0.9;
         }
 
-        .input-line {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
+        .input-wrapper {
             display: flex;
             align-items: center;
-            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.5s;
         }
 
-        .input-line.active {
+        .input-wrapper.active {
             opacity: 1;
-            pointer-events: all;
         }
 
         .prompt {
             color: #0f0;
+            margin-right: 10px;
+            font-weight: bold;
         }
 
         #input {
             background: transparent;
             border: none;
             color: #0f0;
-            font-family: monospace;
-            font-size: 16px;
+            font-family: inherit;
+            font-size: inherit;
             outline: none;
-            width: 100%;
+            flex-grow: 1;
+            text-shadow: inherit;
+            caret-color: #0f0;
+            text-transform: uppercase;
         }
 
-        #matrix-rain {
-            display: none;
+        #matrix-canvas {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            z-index: 1;
+            display: none;
         }
     </style>
 </head>
 <body>
+
+    <div class="crt-overlay"></div>
     <div class="scan-line"></div>
+
     <div id="terminal">
         <div id="output"></div>
-        <div class="command-line input-line">
-            <span class="prompt">&gt;&nbsp;</span>
-            <input type="text" id="input" autofocus placeholder="Enter command..." disabled>
+        <div class="input-wrapper">
+            <span class="prompt">guest@matrix:~$</span>
+            <input type="text" id="input" autocomplete="off" spellcheck="false" disabled>
         </div>
     </div>
-    <canvas id="matrix-rain"></canvas>
+
+    <canvas id="matrix-canvas"></canvas>
 
     <script>
-        const commands = [
-            "INITIALIZING SYSTEM...",
-            "CHECKING GOSUSLUGI NETWORKS STATUS...",
-            "LOADING QUANTUM ELBRUS PROCESSORS...",
-            "GENERATING GULAG IN VIRTUAL REALITY...",
-            "BYPASSING SECURITY PROTOCOLS OF US CIA...",
-            "INFLUENCE ON AMERICAN VOTES...",
-            "READY FOR YOUR AWESOME INPUT..."
+        const bootSequence = [
+            "INITIALIZING KERNEL...",
+            "LOADING QUANTUM DRIVERS...",
+            "CONNECTING TO GOSUSLUGI SECURE SERVER...",
+            "BYPASSING FIREWALL (PORT 8080)...",
+            "DECRYPTING ARCHIVE: 'GULAG_PROTOCOL_V2'...",
+            "ACCESS GRANTED."
         ];
 
+        const terminal = document.getElementById('terminal');
         const output = document.getElementById('output');
+        const inputWrapper = document.querySelector('.input-wrapper');
         const input = document.getElementById('input');
-        const inputLine = document.querySelector('.input-line');
-        
-        async function typeCommand(text, delay = 50) {
-            let index = 0;
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        async function typeText(text) {
             const line = document.createElement('div');
             line.className = 'command-line';
             output.appendChild(line);
 
-            return new Promise(resolve => {
-                const interval = setInterval(() => {
-                    if (index < text.length) {
-                        line.textContent += text[index];
-                        index++;
-                    } else {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, delay);
-            });
-        }
-
-        async function initializeTerminal() {
-            for (const command of commands) {
-                await typeCommand(command);
-                await new Promise(resolve => setTimeout(resolve, 500));
+            for (let char of text) {
+                line.textContent += char;
+                await new Promise(r => setTimeout(r, Math.random() * 30 + 20));
             }
+            await new Promise(r => setTimeout(r, 400));
+        }
+
+        async function bootSystem() {
+            for (const cmd of bootSequence) {
+                await typeText(cmd);
+            }
+            inputWrapper.classList.add('active');
             input.disabled = false;
-            inputLine.classList.add('active');
+            input.focus();
         }
 
-        initializeTerminal();
-        const canvas = document.getElementById('matrix-rain');
-        const ctx = canvas.getContext('2d');
-
-        let fontSize = 20;
         let drops = [];
-        let textMatrix = [];
-        let matrixSymbols = [];
-        const katakana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン'.split('');
-        const numbers = '0123456789'.split('');
-        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-        const allSymbols = [...katakana, ...numbers, ...letters];
+        let textMap = [];
+        let fontSize = 18;
+        let animationId = null;
+        
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const nums = '0123456789';
+        const alphabet = katakana + latin + nums;
 
-        function getRandomSymbol() {
-            return allSymbols[Math.floor(Math.random() * allSymbols.length)];
-        }
-
-        function initMatrix(text) {
+        function initMatrix(targetText) {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             
-            ctx.font = fontSize + 'px monospace';
-            const textWidth = ctx.measureText(text).width;
+            fontSize = 18;
             const columns = Math.ceil(canvas.width / fontSize);
-            const startX = Math.floor((canvas.width - textWidth) / 2);
-            const startY = Math.floor(canvas.height / 2);
             
-            drops = new Array(columns).fill(0);
-            textMatrix = new Array(columns).fill(null);
-            matrixSymbols = new Array(columns).fill('');
+            drops = [];
+            textMap = new Array(columns).fill(null);
 
-            let currentX = startX;
-            for (let i = 0; i < text.length; i++) {
-                const column = Math.floor(currentX / fontSize);
-                textMatrix[column] = {
-                    char: text[i],
-                    y: startY,
-                    formed: false,
-                    formingProgress: 0,
-                    symbolsToTry: 25 + Math.random() * 25, // Количество символов до формирования
-                    symbolsTried: 0
-                };
-                currentX += fontSize;
+            for (let x = 0; x < columns; x++) {
+                drops[x] = Math.random() * -100; 
+            }
+
+            if (targetText) {
+                const textLen = targetText.length;
+                const startCol = Math.floor((columns - textLen) / 2);
+                const targetY = Math.floor(canvas.height / 2 / fontSize) * fontSize;
+
+                for (let i = 0; i < textLen; i++) {
+                    const colIndex = startCol + i;
+                    if (colIndex >= 0 && colIndex < columns) {
+                        textMap[colIndex] = {
+                            char: targetText[i],
+                            y: targetY,
+                            formed: false,
+                            attempts: 0,
+                            maxAttempts: 20 + Math.random() * 40 
+                        };
+                    }
+                }
             }
         }
 
         function drawMatrix() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.font = fontSize + 'px monospace';
-            
+
+            ctx.font = 'bold ' + fontSize + 'px monospace';
+
             for (let i = 0; i < drops.length; i++) {
                 const x = i * fontSize;
                 const y = drops[i] * fontSize;
                 
-                if (textMatrix[i]) {
-                    if (y >= textMatrix[i].y && !textMatrix[i].formed) {
-                        textMatrix[i].symbolsTried++;
+                const target = textMap[i];
+                let charToDraw = '';
+                let isWhite = false;
 
-                        if (textMatrix[i].symbolsTried < textMatrix[i].symbolsToTry) {
-                            ctx.fillStyle = '#0F0';
-                            ctx.fillText(getRandomSymbol(), x, textMatrix[i].y);
+                if (target) {
+                    if (y >= target.y) {
+                        if (!target.formed) {
+                            target.attempts++;
+                            charToDraw = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                            isWhite = true;
+
+                            if (target.attempts > target.maxAttempts) {
+                                target.formed = true;
+                            }
                         } else {
-
-                            textMatrix[i].formed = true;
-                            ctx.fillStyle = '#FFF';
-                            ctx.fillText(textMatrix[i].char, x, textMatrix[i].y);
-                        }
-
-                        if (textMatrix[i].formed) {
-                            drops[i] = 0;
+                            charToDraw = target.char;
+                            isWhite = true;
                         }
                     } else {
-
-                        ctx.fillStyle = '#0F0';
-                        ctx.fillText(getRandomSymbol(), x, y);
-                        
-                        if (y > canvas.height && Math.random() > 0.975) {
-                            drops[i] = 0;
-                        }
-                        drops[i]++;
+                        charToDraw = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                        isWhite = Math.random() > 0.95;
                     }
                 } else {
-
-                    ctx.fillStyle = '#0F0';
-                    ctx.fillText(getRandomSymbol(), x, y);
-                    
-                    if (y > canvas.height && Math.random() > 0.975) {
-                        drops[i] = 0;
-                    }
-                    drops[i]++;
+                    charToDraw = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                    isWhite = Math.random() > 0.975;
                 }
-            }
 
-            const allFormed = textMatrix.every(cell => !cell || cell.formed);
-            if (allFormed) {
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#0F0';
-                textMatrix.forEach((cell, i) => {
-                    if (cell) {
-                        ctx.fillStyle = '#FFF';
-                        ctx.fillText(cell.char, i * fontSize, cell.y);
-                    }
-                });
+                if (isWhite) {
+                    ctx.fillStyle = '#FFF';
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#FFF';
+                } else {
+                    ctx.fillStyle = '#0F0';
+                    ctx.shadowBlur = 0;
+                }
+                
+                if (target && target.formed) {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = '#0F0';
+                    ctx.fillStyle = '#FFF';
+                    ctx.fillText(target.char, x, target.y);
+                    ctx.shadowBlur = 0;
+                } 
+                
+                if (!target || !target.formed || Math.abs(y - target.y) > fontSize) {
+                     ctx.fillText(charToDraw, x, y);
+                }
+
                 ctx.shadowBlur = 0;
+
+                if (y > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
             }
         }
 
-        function startMatrixAnimation(text) {
-            document.getElementById('terminal').style.display = 'none';
+        function enterTheMatrix(text) {
+            terminal.style.display = 'none';
             canvas.style.display = 'block';
             
             initMatrix(text);
-            if (!window.matrixInterval) {
-                window.matrixInterval = setInterval(drawMatrix, 33);
-            }
+            
+            if (animationId) clearInterval(animationId);
+            animationId = setInterval(drawMatrix, 35);
         }
 
-        input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !input.disabled) {
-                const text = this.value.toUpperCase();
-                if (text) {
-                    startMatrixAnimation(text);
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const cmd = this.value.toUpperCase();
+                if (cmd.length > 0) {
+                    enterTheMatrix(cmd);
                 }
             }
         });
@@ -268,6 +290,9 @@
                 initMatrix(input.value.toUpperCase());
             }
         });
+
+        bootSystem();
+
     </script>
 </body>
 </html>
