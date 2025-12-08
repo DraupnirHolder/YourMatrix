@@ -6,8 +6,8 @@
     <style>
         body {
             background: #000;
-            color: #00FF41; /* Тот самый Matrix Green */
-            /* Шрифт более похожий на терминалы из фильма (широкий и угловатый) */
+            color: #00FF41; 
+            /* Шрифт более похожий на терминалы из фильма */
             font-family: 'Lucida Console', 'Consolas', 'Courier New', monospace;
             margin: 0;
             overflow: hidden;
@@ -17,8 +17,6 @@
             justify-content: center;
             align-items: center;
         }
-
-        /* --- CINEMATIC MONITOR CONTAINER --- */
         .monitor-screen {
             position: relative;
             width: 100vw;
@@ -29,7 +27,6 @@
             filter: contrast(1.1) brightness(1.2) saturate(1.2);
         }
 
-        /* --- CRT TEXTURE (Scanlines) --- */
         .crt-texture {
             position: absolute;
             top: 0;
@@ -43,11 +40,10 @@
                 rgba(0, 0, 0, 0) 50%,
                 rgba(0, 0, 0, 0.4) 50%
             );
-            background-size: 100% 4px; /* Четкие сканлайны */
+            background-size: 100% 4px; 
             pointer-events: none;
         }
 
-        /* --- VIGNETTE & CURVE ILLUSION --- */
         .vignette {
             position: absolute;
             top: 0;
@@ -60,7 +56,6 @@
             background: radial-gradient(circle, rgba(0,0,0,0) 55%, rgba(0,0,0,0.6) 100%);
         }
 
-        /* --- MOVING REFRESH BAR --- */
         .scan-bar {
             width: 100%;
             height: 5px;
@@ -81,8 +76,7 @@
             90% { opacity: 0.4; }
             100% { top: 105%; opacity: 0; }
         }
-
-        /* --- TERMINAL --- */
+        
         #terminal {
             position: absolute;
             top: 0;
@@ -92,7 +86,6 @@
             padding: 3rem;
             box-sizing: border-box;
             z-index: 5;
-            /* Классическое "размытое" свечение люминофора */
             text-shadow: 0 0 5px #00FF41, 0 0 10px #00FF41;
             font-size: 1.5rem;
             font-weight: bold;
@@ -136,10 +129,8 @@
             text-transform: uppercase;
         }
 
-        /* --- CANVAS --- */
         #matrix-canvas {
             display: none;
-            /* Легкое свечение для всего холста */
             filter: drop-shadow(0 0 8px rgba(0, 255, 65, 0.6));
         }
     </style>
@@ -247,11 +238,10 @@
         }
 
         function drawMatrix() {
-            // Более прозрачный след (меньше затухание), чтобы хвосты были длиннее
+            // Более прозрачный след, чтобы хвосты были длиннее
             ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Используем тот же шрифт, что и в CSS для консистентности
             ctx.font = 'bold ' + fontSize + 'px "Lucida Console", monospace';
 
             for (let i = 0; i < drops.length; i++) {
@@ -268,7 +258,6 @@
                     ctx.shadowBlur = 8;
                     ctx.shadowColor = '#FFF';
                 } else {
-                    // Чистый Matrix Green
                     ctx.fillStyle = '#00FF41'; 
                     ctx.shadowBlur = 0;
                 }
@@ -280,7 +269,6 @@
                 const target = textMap[i];
                 if (target) {
                     if (target.formed) {
-                        // Готовая буква: Белая с сильным зеленым ореолом
                         ctx.fillStyle = '#FFF';
                         ctx.shadowBlur = 15;
                         ctx.shadowColor = '#00FF41'; 
@@ -289,8 +277,7 @@
                     } 
                     else if (y >= target.y) {
                         target.attempts++;
-                        
-                        // Процесс подбора: Мерцает белым
+                
                         ctx.fillStyle = '#E0FFE0'; 
                         ctx.shadowBlur = 5;
                         ctx.shadowColor = '#00FF41';
