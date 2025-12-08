@@ -6,55 +6,98 @@
     <style>
         body {
             background: #000;
-            color: #0F0;
-            font-family: 'Courier New', Courier, monospace;
+            color: #00FF41; /* Тот самый Matrix Green */
+            /* Шрифт более похожий на терминалы из фильма (широкий и угловатый) */
+            font-family: 'Lucida Console', 'Consolas', 'Courier New', monospace;
             margin: 0;
             overflow: hidden;
             height: 100vh;
             width: 100vw;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
-        .crt-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
+        /* --- CINEMATIC MONITOR CONTAINER --- */
+        .monitor-screen {
+            position: relative;
             width: 100vw;
             height: 100vh;
-            background: radial-gradient(circle, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.6) 100%);
-            background-size: 100% 2px;
-            pointer-events: none;
-            z-index: 10;
+            overflow: hidden;
+            background: #000;
+            /* Убрал sepia/hue-rotate, оставил только контраст и небольшое размытие для свечения */
+            filter: contrast(1.1) brightness(1.2) saturate(1.2);
         }
 
-        .scan-line {
+        /* --- CRT TEXTURE (Scanlines) --- */
+        .crt-texture {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: 10px;
-            background: linear-gradient(to bottom, rgba(0, 255, 0, 0), rgba(0, 255, 0, 0.1) 50%, rgba(0, 255, 0, 0));
-            position: fixed;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0) 50%,
+                rgba(0, 0, 0, 0.4) 50%
+            );
+            background-size: 100% 4px; /* Четкие сканлайны */
+            pointer-events: none;
+        }
+
+        /* --- VIGNETTE & CURVE ILLUSION --- */
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            pointer-events: none;
+            /* Мягкое затемнение углов */
+            background: radial-gradient(circle, rgba(0,0,0,0) 55%, rgba(0,0,0,0.6) 100%);
+        }
+
+        /* --- MOVING REFRESH BAR --- */
+        .scan-bar {
+            width: 100%;
+            height: 5px;
+            background: rgba(0, 255, 65, 0.3);
+            position: absolute;
             left: 0;
             top: 0;
-            animation: scanline 6s linear infinite;
+            animation: scanline 10s linear infinite;
             pointer-events: none;
-            z-index: 11;
-            opacity: 0.6;
+            z-index: 21;
+            opacity: 0.3;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
         }
 
         @keyframes scanline {
-            0% { top: -10%; }
-            100% { top: 110%; }
+            0% { top: -5%; opacity: 0; }
+            10% { opacity: 0.4; }
+            90% { opacity: 0.4; }
+            100% { top: 105%; opacity: 0; }
         }
 
+        /* --- TERMINAL --- */
         #terminal {
-            padding: 2rem;
-            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            position: relative;
+            padding: 3rem;
+            box-sizing: border-box;
             z-index: 5;
-            text-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
-            font-size: 1.2rem;
+            /* Классическое "размытое" свечение люминофора */
+            text-shadow: 0 0 5px #00FF41, 0 0 10px #00FF41;
+            font-size: 1.5rem;
+            font-weight: bold;
+            line-height: 1.5;
+            letter-spacing: 1px;
         }
 
         .command-line {
@@ -75,56 +118,59 @@
         }
 
         .prompt {
-            color: #0f0;
-            margin-right: 10px;
-            font-weight: bold;
+            color: #00FF41;
+            margin-right: 15px;
         }
 
         #input {
             background: transparent;
             border: none;
-            color: #0f0;
+            color: #00FF41;
             font-family: inherit;
             font-size: inherit;
+            font-weight: bold;
             outline: none;
             flex-grow: 1;
             text-shadow: inherit;
-            caret-color: #0f0;
+            caret-color: #00FF41;
             text-transform: uppercase;
         }
 
+        /* --- CANVAS --- */
         #matrix-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1;
             display: none;
+            /* Легкое свечение для всего холста */
+            filter: drop-shadow(0 0 8px rgba(0, 255, 65, 0.6));
         }
     </style>
 </head>
 <body>
 
-    <div class="crt-overlay"></div>
-    <div class="scan-line"></div>
+    <div class="monitor-screen">
+        <div class="crt-texture"></div>
+        <div class="vignette"></div>
+        <div class="scan-bar"></div>
 
-    <div id="terminal">
-        <div id="output"></div>
-        <div class="input-wrapper">
-            <span class="prompt">guest@matrix:~$</span>
-            <input type="text" id="input" autocomplete="off" spellcheck="false" disabled>
+        <div id="terminal">
+            <div id="output"></div>
+            <div class="input-wrapper">
+                <span class="prompt">guest@matrix:~$</span>
+                <input type="text" id="input" autocomplete="off" spellcheck="false" disabled>
+            </div>
         </div>
-    </div>
 
-    <canvas id="matrix-canvas"></canvas>
+        <canvas id="matrix-canvas"></canvas>
+    </div>
 
     <script>
         const bootSequence = [
-            "INITIALIZING KERNEL...",
-            "LOADING QUANTUM DRIVERS...",
-            "CONNECTING TO GOSUSLUGI SECURE SERVER...",
-            "BYPASSING FIREWALL (PORT 8080)...",
-            "DECRYPTING ARCHIVE: 'GULAG_PROTOCOL_V2'...",
-            "ACCESS GRANTED."
+            "INITIALIZING SYSTEM...",
+            "CHECKING GOSUSLUGI NETWORKS STATUS...",
+            "LOADING QUANTUM ELBRUS PROCESSORS...",
+            "GENERATING GULAG IN VIRTUAL REALITY...",
+            "BYPASSING SECURITY PROTOCOLS OF US CIA...",
+            "INFLUENCE ON AMERICAN VOTES...",
+            "READY FOR YOUR AWESOME INPUT..."
         ];
 
         const terminal = document.getElementById('terminal');
@@ -157,7 +203,7 @@
 
         let drops = [];
         let textMap = [];
-        let fontSize = 18;
+        let fontSize = 20; 
         let animationId = null;
         
         const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
@@ -169,7 +215,8 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             
-            fontSize = 18;
+            // Чуть меньше шрифт, чтобы выглядело плотнее, как в титрах
+            fontSize = 20; 
             const columns = Math.ceil(canvas.width / fontSize);
             
             drops = [];
@@ -200,64 +247,64 @@
         }
 
         function drawMatrix() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            // Более прозрачный след (меньше затухание), чтобы хвосты были длиннее
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.font = 'bold ' + fontSize + 'px monospace';
+            // Используем тот же шрифт, что и в CSS для консистентности
+            ctx.font = 'bold ' + fontSize + 'px "Lucida Console", monospace';
 
             for (let i = 0; i < drops.length; i++) {
                 const x = i * fontSize;
                 const y = drops[i] * fontSize;
                 
-                const target = textMap[i];
-                let charToDraw = '';
-                let isWhite = false;
-
-                if (target) {
-                    if (y >= target.y) {
-                        if (!target.formed) {
-                            target.attempts++;
-                            charToDraw = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-                            isWhite = true;
-
-                            if (target.attempts > target.maxAttempts) {
-                                target.formed = true;
-                            }
-                        } else {
-                            charToDraw = target.char;
-                            isWhite = true;
-                        }
-                    } else {
-                        charToDraw = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-                        isWhite = Math.random() > 0.95;
-                    }
-                } else {
-                    charToDraw = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-                    isWhite = Math.random() > 0.975;
-                }
-
-                if (isWhite) {
-                    ctx.fillStyle = '#FFF';
-                    ctx.shadowBlur = 10;
+                const randomChar = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                
+                // Случайные белые искорки в потоке
+                const isSparkle = Math.random() > 0.98; 
+                
+                if (isSparkle) {
+                    ctx.fillStyle = '#FFF'; 
+                    ctx.shadowBlur = 8;
                     ctx.shadowColor = '#FFF';
                 } else {
-                    ctx.fillStyle = '#0F0';
+                    // Чистый Matrix Green
+                    ctx.fillStyle = '#00FF41'; 
                     ctx.shadowBlur = 0;
                 }
                 
-                if (target && target.formed) {
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = '#0F0';
-                    ctx.fillStyle = '#FFF';
-                    ctx.fillText(target.char, x, target.y);
-                    ctx.shadowBlur = 0;
-                } 
+                ctx.fillText(randomChar, x, y);
+                ctx.shadowBlur = 0; // Сброс тени
                 
-                if (!target || !target.formed || Math.abs(y - target.y) > fontSize) {
-                     ctx.fillText(charToDraw, x, y);
-                }
+                // Отрисовка зафиксированного слова
+                const target = textMap[i];
+                if (target) {
+                    if (target.formed) {
+                        // Готовая буква: Белая с сильным зеленым ореолом
+                        ctx.fillStyle = '#FFF';
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = '#00FF41'; 
+                        ctx.fillText(target.char, x, target.y);
+                        ctx.shadowBlur = 0;
+                    } 
+                    else if (y >= target.y) {
+                        target.attempts++;
+                        
+                        // Процесс подбора: Мерцает белым
+                        ctx.fillStyle = '#E0FFE0'; 
+                        ctx.shadowBlur = 5;
+                        ctx.shadowColor = '#00FF41';
+                        
+                        const tempChar = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                        ctx.fillText(tempChar, x, target.y);
+                        
+                        ctx.shadowBlur = 0;
 
-                ctx.shadowBlur = 0;
+                        if (target.attempts > target.maxAttempts) {
+                            target.formed = true;
+                        }
+                    }
+                }
 
                 if (y > canvas.height && Math.random() > 0.975) {
                     drops[i] = 0;
