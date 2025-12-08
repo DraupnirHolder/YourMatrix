@@ -15,7 +15,7 @@
 
 1. Клонировать репозиторий
    ```bash
-   git clone https://github.com/your-username/your-matrix.git
+   git clone https://github.com/DraupnirHolder/YourMatrix/
    ```
 
 2. Перейти в директорию проекта
