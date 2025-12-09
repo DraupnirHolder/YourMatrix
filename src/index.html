@@ -7,7 +7,6 @@
         body {
             background: #000;
             color: #00FF41; 
-            /* Шрифт более похожий на терминалы из фильма */
             font-family: 'Lucida Console', 'Consolas', 'Courier New', monospace;
             margin: 0;
             overflow: hidden;
@@ -52,7 +51,6 @@
             height: 100%;
             z-index: 20;
             pointer-events: none;
-            /* Мягкое затемнение углов */
             background: radial-gradient(circle, rgba(0,0,0,0) 55%, rgba(0,0,0,0.6) 100%);
         }
 
@@ -205,8 +203,7 @@
         function initMatrix(targetText) {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            
-            // Чуть меньше шрифт, чтобы выглядело плотнее, как в титрах
+  
             fontSize = 20; 
             const columns = Math.ceil(canvas.width / fontSize);
             
